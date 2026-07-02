@@ -63,7 +63,18 @@ async function askClaude(prompt, maxTokens) {
   return text.trim();
 }
 
-export default async () => {
+export default async (request) => {
+  // Netlify's scheduler invokes this via POST; GET is only for manual testing via curl,
+  // so only GET requires the shared secret (prevents public abuse of the test path).
+  if (request.method === "GET") {
+    const url = new URL(request.url);
+    if (url.searchParams.get("key") !== process.env.DAILY_CONTENT_TEST_KEY) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
   try {
     console.log("[daily-content] getting rotation state from blobs");
     const rotationStore = getStore("daily-content-state");
@@ -130,4 +141,4 @@ DESCRIPTION: ${product.desc}`;
   }
 };
 
-export const config = { schedule: "0 13 * * *" };
+export const config = { schedule: "0 13 * * *", path: "/api/_test-daily-content" };
