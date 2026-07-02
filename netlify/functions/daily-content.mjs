@@ -129,3 +129,5 @@ DESCRIPTION: ${product.desc}`;
     });
   }
 };
+
+export const config = { schedule: "0 13 * * *" };
