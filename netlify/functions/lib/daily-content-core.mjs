@@ -27,7 +27,7 @@ async function getShopifyAccessToken(domain) {
 async function fetchShopifyProduct(rotationIndex) {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
   const token = await getShopifyAccessToken(domain);
-  const url = `https://${domain}/admin/api/2025-01/graphql.json`;
+  const url = `https://${domain}/admin/api/2025-10/graphql.json`;
   const query = `
     query {
       products(first: 50, query: "status:active") {
@@ -49,7 +49,14 @@ async function fetchShopifyProduct(rotationIndex) {
     headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": token },
     body: JSON.stringify({ query }),
   });
-  const data = await res.json();
+  const rawBody = await res.text();
+  console.log("[daily-content] Shopify GraphQL response status:", res.status, "body:", rawBody.slice(0, 500));
+  let data;
+  try {
+    data = JSON.parse(rawBody);
+  } catch {
+    throw new Error(`Shopify GraphQL endpoint returned non-JSON (status ${res.status}): ${rawBody.slice(0, 200)}`);
+  }
   if (data.errors) throw new Error(`Shopify API error: ${JSON.stringify(data.errors)}`);
 
   const products = (data.data?.products?.edges || []).map((e) => e.node);
