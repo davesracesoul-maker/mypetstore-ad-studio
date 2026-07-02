@@ -65,11 +65,14 @@ async function askClaude(prompt, maxTokens) {
 
 export default async () => {
   try {
+    console.log("[daily-content] getting rotation state from blobs");
     const rotationStore = getStore("daily-content-state");
     const state = await rotationStore.get("rotation", { type: "json" });
     const currentIndex = state?.index ?? 0;
 
+    console.log("[daily-content] fetching Shopify product, index", currentIndex);
     const product = await fetchShopifyProduct(currentIndex);
+    console.log("[daily-content] got product:", product.name);
     await rotationStore.setJSON("rotation", { index: currentIndex + 1 });
 
     const adPrompt = `You are a direct-response copywriter for mypetstore.shop. Write ONE ad for this product using the AIDA framework:
@@ -92,12 +95,14 @@ DESCRIPTION: ${product.desc}`;
 PRODUCT: ${product.name}
 DESCRIPTION: ${product.desc}`;
 
+    console.log("[daily-content] calling Claude for ad/blog/press-release/tip");
     const [adRaw, blogPost, pressRelease, dailyTip] = await Promise.all([
       askClaude(adPrompt, 500),
       askClaude(blogPrompt, 1200),
       askClaude(pressReleasePrompt, 700),
       askClaude(tipPrompt, 200),
     ]);
+    console.log("[daily-content] got all Claude responses");
 
     let ad;
     try {
@@ -111,11 +116,13 @@ DESCRIPTION: ${product.desc}`;
 
     const contentStore = getStore("daily-content");
     await contentStore.setJSON(today, bundle);
+    console.log("[daily-content] saved bundle for", today);
 
     return new Response(JSON.stringify({ success: true, date: today }), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
+    console.error("[daily-content] FAILED:", err.message, err.stack);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
