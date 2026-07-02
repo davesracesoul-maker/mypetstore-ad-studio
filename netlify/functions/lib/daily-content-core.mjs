@@ -1,8 +1,23 @@
 import { getStore } from "@netlify/blobs";
 
+async function getShopifyAccessToken(domain) {
+  const res = await fetch(`https://${domain}/admin/oauth/access_token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: process.env.SHOPIFY_CLIENT_ID,
+      client_secret: process.env.SHOPIFY_CLIENT_SECRET,
+    }),
+  });
+  const data = await res.json();
+  if (!data.access_token) throw new Error(`Shopify token exchange failed: ${JSON.stringify(data)}`);
+  return data.access_token;
+}
+
 async function fetchShopifyProduct(rotationIndex) {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
-  const token = process.env.SHOPIFY_ADMIN_TOKEN;
+  const token = await getShopifyAccessToken(domain);
   const url = `https://${domain}/admin/api/2025-01/graphql.json`;
   const query = `
     query {
