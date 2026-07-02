@@ -3,6 +3,9 @@
   publish = "dist"
   functions = "netlify/functions"
 
+[functions."daily-content"]
+  schedule = "0 13 * * *"
+
 [[redirects]]
   from = "/api/*"
   to = "/api/:splat"
