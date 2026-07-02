@@ -1,7 +1,9 @@
 import { getStore } from "@netlify/blobs";
 
 async function getShopifyAccessToken(domain) {
-  const res = await fetch(`https://${domain}/admin/oauth/access_token`, {
+  const tokenUrl = `https://${domain}/admin/oauth/access_token`;
+  console.log("[daily-content] requesting Shopify token from", tokenUrl, "clientId set:", !!process.env.SHOPIFY_CLIENT_ID, "clientSecret set:", !!process.env.SHOPIFY_CLIENT_SECRET);
+  const res = await fetch(tokenUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -10,7 +12,14 @@ async function getShopifyAccessToken(domain) {
       client_secret: process.env.SHOPIFY_CLIENT_SECRET,
     }),
   });
-  const data = await res.json();
+  const raw = await res.text();
+  console.log("[daily-content] Shopify token response status:", res.status, "body:", raw.slice(0, 500));
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(`Shopify token endpoint returned non-JSON (status ${res.status}): ${raw.slice(0, 200)}`);
+  }
   if (!data.access_token) throw new Error(`Shopify token exchange failed: ${JSON.stringify(data)}`);
   return data.access_token;
 }
