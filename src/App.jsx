@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ContentCalendar from "./ContentCalendar.jsx";
 
 const PLATFORMS = [
   { id: "facebook", label: "Facebook", icon: "f", color: "#1877F2" },
@@ -233,6 +234,7 @@ function StaticAdCanvas({ ad, product }) {
 }
 
 export default function AdStudio() {
+  const [view, setView] = useState("studio");
   const [step, setStep] = useState(1);
   const [product, setProduct] = useState({ name: "", price: "", desc: "", url: "" });
   const [platform, setPlatform] = useState("facebook");
@@ -356,13 +358,24 @@ Return ONLY a raw JSON array of exactly 3 objects. No markdown fences, no explan
           <div style={{ width: 30, height: 30, background: "#FF8A4C", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>🐾</div>
           MyPetStore <span style={{ color: "#FF8A4C", marginLeft: 4 }}>Ad Studio</span>
         </div>
-        <div style={{ background: "rgba(255,138,76,0.2)", color: "#FF8A4C", fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 50 }}>AI-Powered</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button onClick={() => setView("studio")} style={{ background: view === "studio" ? "#FF8A4C" : "rgba(255,255,255,0.08)", color: view === "studio" ? "#fff" : "rgba(255,255,255,0.75)", border: "none", padding: "7px 16px", borderRadius: 50, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>✨ Ad Studio</button>
+          <button onClick={() => setView("calendar")} style={{ background: view === "calendar" ? "#FF8A4C" : "rgba(255,255,255,0.08)", color: view === "calendar" ? "#fff" : "rgba(255,255,255,0.75)", border: "none", padding: "7px 16px", borderRadius: 50, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>📅 Content Calendar</button>
+        </div>
       </div>
 
       <div style={s.main}>
 
+        {view === "calendar" && (
+          <ContentCalendar onUseProduct={(p) => {
+            setProduct({ name: p?.name || "", price: p?.price || "", desc: p?.desc || "", url: p?.url || "" });
+            setAds([]); resetVideo(); setStep(1); setView("studio");
+            window.scrollTo(0, 0);
+          }} />
+        )}
+
         {/* Steps 1 & 2 — Input */}
-        {(step === 1 || step === 2) && (
+        {view === "studio" && (step === 1 || step === 2) && (
           <>
             <div style={{ textAlign: "center", marginBottom: 28, paddingTop: 8 }}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#FF8A4C", marginBottom: 10 }}>Zeely-Style for mypetstore.shop</div>
@@ -458,7 +471,7 @@ Return ONLY a raw JSON array of exactly 3 objects. No markdown fences, no explan
         )}
 
         {/* Step 3 — Loading */}
-        {step === 3 && (
+        {view === "studio" && step === 3 && (
           <div style={{ textAlign: "center", padding: "80px 20px" }}>
             <div style={{ fontSize: 48, marginBottom: 20 }}>✨</div>
             <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Generating Your Ads...</h2>
@@ -471,7 +484,7 @@ Return ONLY a raw JSON array of exactly 3 objects. No markdown fences, no explan
         )}
 
         {/* Step 4 — Results */}
-        {step === 4 && ads.length > 0 && (
+        {view === "studio" && step === 4 && ads.length > 0 && (
           <>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
               <div>

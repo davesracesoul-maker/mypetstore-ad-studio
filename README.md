@@ -9,6 +9,7 @@ AI-powered ad generator for mypetstore.shop — inspired by Zeely.
 - Choose copywriting framework (AIDA, PAS, Before-After-Bridge, FAB)
 - Claude AI writes 3 scroll-stopping ad variations in seconds
 - Copy the copy → paste into Meta Ads Manager or TikTok Ads
+- **Content Calendar tab**: browse the daily auto-generated content bundles (a scheduled Netlify function picks a rotating store product each day at 13:00 UTC and writes an ad, blog post, press release & pet tip via Claude, stored in Netlify Blobs). Each piece has a copy button, and "Use in Ad Studio" pre-fills the generator with that day's product.
 
 ---
 
