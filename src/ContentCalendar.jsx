@@ -144,7 +144,10 @@ export default function ContentCalendar({ onUseProduct }) {
         <div style={card}>
           <div style={cardHeader}>
             <div style={sectionTitle}>Social Ad</div>
-            <CopyButton text={[b.ad.headline, b.ad.hook, b.ad.body, b.ad.cta].filter(Boolean).join("\n\n")} />
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {b.tweetUrl && <a href={b.tweetUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#2D7A2D", textDecoration: "none" }}>✓ Posted to X ↗</a>}
+              <CopyButton text={[b.ad.headline, b.ad.hook, b.ad.body, b.ad.cta].filter(Boolean).join("\n\n")} />
+            </div>
           </div>
           {b.ad.headline && <div style={{ fontSize: 17, fontWeight: 800, color: "#2B1F14", lineHeight: 1.3, marginBottom: 10 }}>{b.ad.headline}</div>}
           {b.ad.hook && <div style={{ fontSize: 14, fontWeight: 700, color: "#2B1F14", lineHeight: 1.4, background: "#FFF8EF", padding: "10px 12px", borderRadius: 8, borderLeft: "3px solid #FF8A4C", marginBottom: 10 }}>{b.ad.hook}</div>}

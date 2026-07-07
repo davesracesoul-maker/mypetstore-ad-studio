@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import crypto from "node:crypto";
 
 async function getShopifyAccessToken(domain) {
   const tokenUrl = `https://${domain}/admin/oauth/access_token`;
@@ -162,6 +163,67 @@ async function publishBlogArticle(token, bundle) {
   return { id: article.id, url: `https://mypetstore.shop/blogs/${blog.handle}/${article.handle}` };
 }
 
+function pctEncode(s) {
+  return encodeURIComponent(s).replace(/[!*'()]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());
+}
+
+function oauth1Header(method, url, consumerKey, consumerSecret, token, tokenSecret) {
+  const params = {
+    oauth_consumer_key: consumerKey,
+    oauth_nonce: crypto.randomBytes(16).toString("hex"),
+    oauth_signature_method: "HMAC-SHA1",
+    oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
+    oauth_token: token,
+    oauth_version: "1.0",
+  };
+  // JSON request bodies are not part of the OAuth 1.0a signature base string
+  const paramStr = Object.keys(params).sort().map((k) => `${pctEncode(k)}=${pctEncode(params[k])}`).join("&");
+  const baseStr = [method.toUpperCase(), pctEncode(url), pctEncode(paramStr)].join("&");
+  const signingKey = `${pctEncode(consumerSecret)}&${pctEncode(tokenSecret)}`;
+  params.oauth_signature = crypto.createHmac("sha1", signingKey).update(baseStr).digest("base64");
+  return "OAuth " + Object.keys(params).sort().map((k) => `${pctEncode(k)}="${pctEncode(params[k])}"`).join(", ");
+}
+
+function buildTweetText(bundle) {
+  const link = bundle.product?.url || "https://mypetstore.shop";
+  const headline = (bundle.ad?.headline || "").trim();
+  const hook = (bundle.ad?.hook || "").trim();
+  // t.co wraps every link at 23 chars, +1 for the newline before it
+  const budget = 280 - 24;
+  let text = [headline, hook].filter(Boolean).join("\n\n");
+  if (!text) text = bundle.product?.name || "New at MyPetStore";
+  if (text.length > budget) {
+    text = hook && hook.length <= budget ? hook : text.slice(0, budget - 1) + "…";
+  }
+  return `${text}\n${link}`;
+}
+
+function xConfigured() {
+  return !!(process.env.X_API_KEY && process.env.X_API_SECRET && process.env.X_ACCESS_TOKEN && process.env.X_ACCESS_TOKEN_SECRET);
+}
+
+async function postToX(bundle) {
+  const url = "https://api.twitter.com/2/tweets";
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: oauth1Header("POST", url, process.env.X_API_KEY, process.env.X_API_SECRET, process.env.X_ACCESS_TOKEN, process.env.X_ACCESS_TOKEN_SECRET),
+    },
+    body: JSON.stringify({ text: buildTweetText(bundle) }),
+  });
+  const raw = await res.text();
+  console.log("[daily-content] X post response status:", res.status, "body:", raw.slice(0, 300));
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(`X API returned non-JSON (status ${res.status}): ${raw.slice(0, 200)}`);
+  }
+  if (!res.ok || !data.data?.id) throw new Error(`X post failed (status ${res.status}): ${JSON.stringify(data).slice(0, 300)}`);
+  return { id: data.data.id, url: `https://x.com/i/status/${data.data.id}` };
+}
+
 async function askClaude(prompt, maxTokens) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -253,6 +315,24 @@ DESCRIPTION: ${product.desc}`;
       // Blog publish is best-effort — never let it sink the rest of the bundle
       bundle.blogPublishError = err.message;
       console.error("[daily-content] blog publish FAILED:", err.message);
+    }
+  }
+
+  if (existing?.tweetId) {
+    bundle.tweetId = existing.tweetId;
+    bundle.tweetUrl = existing.tweetUrl;
+    console.log("[daily-content] already posted to X today, skipping:", existing.tweetUrl);
+  } else if (!xConfigured()) {
+    console.log("[daily-content] X credentials not configured, skipping X post");
+  } else {
+    try {
+      const tweet = await postToX(bundle);
+      bundle.tweetId = tweet.id;
+      bundle.tweetUrl = tweet.url;
+      console.log("[daily-content] posted to X:", tweet.url);
+    } catch (err) {
+      bundle.xPostError = err.message;
+      console.error("[daily-content] X post FAILED:", err.message);
     }
   }
 
