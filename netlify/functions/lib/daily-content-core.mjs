@@ -24,10 +24,26 @@ async function getShopifyAccessToken(domain) {
   return data.access_token;
 }
 
-async function fetchShopifyProduct(rotationIndex) {
+async function shopifyGraphQL(token, query, variables) {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
-  const token = await getShopifyAccessToken(domain);
-  const url = `https://${domain}/admin/api/2025-10/graphql.json`;
+  const res = await fetch(`https://${domain}/admin/api/2025-10/graphql.json`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": token },
+    body: JSON.stringify({ query, variables }),
+  });
+  const rawBody = await res.text();
+  console.log("[daily-content] Shopify GraphQL response status:", res.status, "body:", rawBody.slice(0, 500));
+  let data;
+  try {
+    data = JSON.parse(rawBody);
+  } catch {
+    throw new Error(`Shopify GraphQL endpoint returned non-JSON (status ${res.status}): ${rawBody.slice(0, 200)}`);
+  }
+  if (data.errors) throw new Error(`Shopify API error: ${JSON.stringify(data.errors)}`);
+  return data.data;
+}
+
+async function fetchShopifyProduct(token, rotationIndex) {
   const query = `
     query {
       products(first: 50, query: "status:active") {
@@ -43,23 +59,9 @@ async function fetchShopifyProduct(rotationIndex) {
       }
     }
   `;
+  const data = await shopifyGraphQL(token, query);
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": token },
-    body: JSON.stringify({ query }),
-  });
-  const rawBody = await res.text();
-  console.log("[daily-content] Shopify GraphQL response status:", res.status, "body:", rawBody.slice(0, 500));
-  let data;
-  try {
-    data = JSON.parse(rawBody);
-  } catch {
-    throw new Error(`Shopify GraphQL endpoint returned non-JSON (status ${res.status}): ${rawBody.slice(0, 200)}`);
-  }
-  if (data.errors) throw new Error(`Shopify API error: ${JSON.stringify(data.errors)}`);
-
-  const products = (data.data?.products?.edges || []).map((e) => e.node);
+  const products = (data?.products?.edges || []).map((e) => e.node);
   if (!products.length) throw new Error("No active products found in Shopify store");
 
   const index = rotationIndex % products.length;
@@ -71,6 +73,93 @@ async function fetchShopifyProduct(rotationIndex) {
     url: `https://mypetstore.shop/products/${p.handle}`,
     image: p.featuredMedia?.preview?.image?.url || "",
   };
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function inlineFormat(s) {
+  return escapeHtml(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+}
+
+function blogTextToHtml(blogPost, product) {
+  const lines = (blogPost || "").split("\n");
+  let title = "";
+  if (lines[0] && lines[0].startsWith("TITLE:")) {
+    title = lines.shift().replace(/^TITLE:\s*/, "").replace(/\*\*/g, "").trim();
+  }
+  const parts = [];
+  let list = null;
+  const flushList = () => {
+    if (list) {
+      parts.push(`<ul>${list.join("")}</ul>`);
+      list = null;
+    }
+  };
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) { flushList(); continue; }
+    if (t.startsWith("- ")) {
+      list = list || [];
+      list.push(`<li>${inlineFormat(t.slice(2))}</li>`);
+      continue;
+    }
+    flushList();
+    if (t.startsWith("#")) {
+      parts.push(`<h2>${inlineFormat(t.replace(/^#+\s*/, ""))}</h2>`);
+      continue;
+    }
+    const headingMatch = t.match(/^\*\*(.+)\*\*:?$/);
+    if (headingMatch) {
+      parts.push(`<h3>${inlineFormat(headingMatch[1])}</h3>`);
+      continue;
+    }
+    parts.push(`<p>${inlineFormat(t)}</p>`);
+  }
+  flushList();
+
+  let html = "";
+  if (product?.image) {
+    html += `<p><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" style="max-width:100%;border-radius:8px;" /></p>\n`;
+  }
+  html += parts.join("\n");
+  if (product?.url) {
+    const priceTag = product.price ? ` — ${escapeHtml(product.price)}` : "";
+    html += `\n<p><strong><a href="${escapeHtml(product.url)}">Shop the ${escapeHtml(product.name)}${priceTag} →</a></strong></p>`;
+  }
+  return { title: title || product?.name || "From MyPetStore", html };
+}
+
+async function publishBlogArticle(token, bundle) {
+  const blogsData = await shopifyGraphQL(token, `query { blogs(first: 1) { edges { node { id handle } } } }`);
+  const blog = blogsData?.blogs?.edges?.[0]?.node;
+  if (!blog) throw new Error("No blog found on the store");
+
+  const { title, html } = blogTextToHtml(bundle.blogPost, bundle.product);
+  const data = await shopifyGraphQL(
+    token,
+    `mutation CreateArticle($article: ArticleCreateInput!) {
+      articleCreate(article: $article) {
+        article { id handle }
+        userErrors { field message }
+      }
+    }`,
+    {
+      article: {
+        blogId: blog.id,
+        title,
+        body: html,
+        isPublished: true,
+        tags: ["daily-content"],
+        author: { name: "MyPetStore" },
+      },
+    }
+  );
+  const userErrors = data?.articleCreate?.userErrors;
+  if (userErrors?.length) throw new Error(`articleCreate failed: ${JSON.stringify(userErrors)}`);
+  const article = data.articleCreate.article;
+  return { id: article.id, url: `https://mypetstore.shop/blogs/${blog.handle}/${article.handle}` };
 }
 
 async function askClaude(prompt, maxTokens) {
@@ -100,8 +189,10 @@ export async function runDailyContent() {
   const state = await rotationStore.get("rotation", { type: "json" });
   const currentIndex = state?.index ?? 0;
 
+  const token = await getShopifyAccessToken(process.env.SHOPIFY_STORE_DOMAIN);
+
   console.log("[daily-content] fetching Shopify product, index", currentIndex);
-  const product = await fetchShopifyProduct(currentIndex);
+  const product = await fetchShopifyProduct(token, currentIndex);
   console.log("[daily-content] got product:", product.name);
   await rotationStore.setJSON("rotation", { index: currentIndex + 1 });
 
@@ -145,6 +236,26 @@ DESCRIPTION: ${product.desc}`;
   const bundle = { date: today, product, ad, blogPost, pressRelease, dailyTip };
 
   const contentStore = getStore("daily-content");
+
+  const existing = await contentStore.get(today, { type: "json" });
+  if (existing?.blogArticleId) {
+    // Already published today (e.g. manual test re-run) — don't create a duplicate article
+    bundle.blogArticleId = existing.blogArticleId;
+    bundle.blogUrl = existing.blogUrl;
+    console.log("[daily-content] blog already published today, skipping:", existing.blogUrl);
+  } else {
+    try {
+      const article = await publishBlogArticle(token, bundle);
+      bundle.blogArticleId = article.id;
+      bundle.blogUrl = article.url;
+      console.log("[daily-content] published blog article:", article.url);
+    } catch (err) {
+      // Blog publish is best-effort — never let it sink the rest of the bundle
+      bundle.blogPublishError = err.message;
+      console.error("[daily-content] blog publish FAILED:", err.message);
+    }
+  }
+
   await contentStore.setJSON(today, bundle);
   console.log("[daily-content] saved bundle for", today);
 

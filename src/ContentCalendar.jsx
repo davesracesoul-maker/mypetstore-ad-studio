@@ -167,7 +167,10 @@ export default function ContentCalendar({ onUseProduct }) {
         <div style={card}>
           <div style={cardHeader}>
             <div style={sectionTitle}>Blog Post</div>
-            <CopyButton text={b.blogPost} />
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {b.blogUrl && <a href={b.blogUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#2D7A2D", textDecoration: "none" }}>✓ Live on your blog ↗</a>}
+              <CopyButton text={b.blogPost} />
+            </div>
           </div>
           {blogTitle && <div style={{ fontSize: 19, fontWeight: 800, color: "#2B1F14", lineHeight: 1.3, marginBottom: 12 }}>{stripBold(blogTitle)}</div>}
           {renderContent(blogBody)}
