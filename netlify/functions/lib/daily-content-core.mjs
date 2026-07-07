@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";
+import { pinterestConfigured, getStoredTokens, createDailyPin } from "./pinterest.mjs";
 
 async function getShopifyAccessToken(domain) {
   const tokenUrl = `https://${domain}/admin/oauth/access_token`;
@@ -333,6 +334,26 @@ DESCRIPTION: ${product.desc}`;
     } catch (err) {
       bundle.xPostError = err.message;
       console.error("[daily-content] X post FAILED:", err.message);
+    }
+  }
+
+  if (existing?.pinId) {
+    bundle.pinId = existing.pinId;
+    bundle.pinUrl = existing.pinUrl;
+    console.log("[daily-content] already pinned today, skipping:", existing.pinUrl);
+  } else if (!pinterestConfigured()) {
+    console.log("[daily-content] Pinterest app credentials not configured, skipping pin");
+  } else if (!(await getStoredTokens())?.access_token) {
+    console.log("[daily-content] Pinterest not connected (no OAuth token), skipping pin");
+  } else {
+    try {
+      const pin = await createDailyPin(bundle);
+      bundle.pinId = pin.id;
+      bundle.pinUrl = pin.url;
+      console.log("[daily-content] created Pinterest pin:", pin.url);
+    } catch (err) {
+      bundle.pinterestPostError = err.message;
+      console.error("[daily-content] Pinterest pin FAILED:", err.message);
     }
   }
 
