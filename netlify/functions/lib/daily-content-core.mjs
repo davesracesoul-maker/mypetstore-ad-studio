@@ -1,6 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";
 import { pinterestConfigured, getStoredTokens, createDailyPin } from "./pinterest.mjs";
+import { instagramConfigured, createInstagramPost } from "./instagram.mjs";
 
 async function getShopifyAccessToken(domain) {
   const tokenUrl = `https://${domain}/admin/oauth/access_token`;
@@ -354,6 +355,24 @@ DESCRIPTION: ${product.desc}`;
     } catch (err) {
       bundle.pinterestPostError = err.message;
       console.error("[daily-content] Pinterest pin FAILED:", err.message);
+    }
+  }
+
+  if (existing?.igMediaId) {
+    bundle.igMediaId = existing.igMediaId;
+    bundle.igUrl = existing.igUrl;
+    console.log("[daily-content] already posted to Instagram today, skipping:", existing.igUrl);
+  } else if (!instagramConfigured()) {
+    console.log("[daily-content] Instagram access token not configured, skipping Instagram post");
+  } else {
+    try {
+      const post = await createInstagramPost(bundle);
+      bundle.igMediaId = post.id;
+      bundle.igUrl = post.url;
+      console.log("[daily-content] posted to Instagram:", post.url);
+    } catch (err) {
+      bundle.igPostError = err.message;
+      console.error("[daily-content] Instagram post FAILED:", err.message);
     }
   }
 

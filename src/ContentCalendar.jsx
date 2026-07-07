@@ -147,6 +147,7 @@ export default function ContentCalendar({ onUseProduct }) {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {b.tweetUrl && <a href={b.tweetUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#2D7A2D", textDecoration: "none" }}>✓ Posted to X ↗</a>}
               {b.pinUrl && <a href={b.pinUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#2D7A2D", textDecoration: "none" }}>✓ Pinned ↗</a>}
+              {b.igUrl && <a href={b.igUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#2D7A2D", textDecoration: "none" }}>✓ On Instagram ↗</a>}
               <CopyButton text={[b.ad.headline, b.ad.hook, b.ad.body, b.ad.cta].filter(Boolean).join("\n\n")} />
             </div>
           </div>
