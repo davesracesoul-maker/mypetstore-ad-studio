@@ -308,6 +308,7 @@ DESCRIPTION: ${product.desc}`;
   const bundle = { date: today, product, ad, blogPost, pressRelease, dailyTip };
 
   if (existing?.blogArticleId) {
+    bundle.fbCaption = existing.fbCaption;
     // Already published today (e.g. manual test re-run) — don't create a duplicate article
     bundle.blogArticleId = existing.blogArticleId;
     bundle.blogUrl = existing.blogUrl;
@@ -323,6 +324,19 @@ DESCRIPTION: ${product.desc}`;
       bundle.blogPublishError = err.message;
       console.error("[daily-content] blog publish FAILED:", err.message);
     }
+  }
+
+  if (!bundle.fbCaption) {
+    // Ready-to-paste Facebook Page caption (Meta Business Suite scheduler / manual post)
+    bundle.fbCaption = [
+      ad.headline,
+      ad.hook,
+      ad.body,
+      bundle.blogUrl ? `Read more: ${bundle.blogUrl}` : "",
+      product.url ? `Shop: ${product.url}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
   }
 
   if (existing?.tweetId) {
