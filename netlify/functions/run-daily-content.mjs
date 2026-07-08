@@ -10,7 +10,7 @@ export default async (request) => {
   }
 
   try {
-    const bundle = await runDailyContent();
+    const bundle = await runDailyContent({ force: url.searchParams.get("force") === "1" });
     return new Response(JSON.stringify({ success: true, bundle }), {
       headers: { "Content-Type": "application/json" },
     });

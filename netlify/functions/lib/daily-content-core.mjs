@@ -247,7 +247,16 @@ async function askClaude(prompt, maxTokens) {
   return text.trim();
 }
 
-export async function runDailyContent() {
+export async function runDailyContent({ force = false } = {}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const contentStore = getStore("daily-content");
+
+  const existing = await contentStore.get(today, { type: "json" });
+  if (existing && !force) {
+    console.log("[daily-content] bundle already exists for", today, "— returning it (pass force to regenerate)");
+    return existing;
+  }
+
   console.log("[daily-content] getting rotation state from blobs");
   const rotationStore = getStore("daily-content-state");
   const state = await rotationStore.get("rotation", { type: "json" });
@@ -296,12 +305,8 @@ DESCRIPTION: ${product.desc}`;
     ad = { headline: product.name, hook: "", body: adRaw, cta: "Shop Now" };
   }
 
-  const today = new Date().toISOString().slice(0, 10);
   const bundle = { date: today, product, ad, blogPost, pressRelease, dailyTip };
 
-  const contentStore = getStore("daily-content");
-
-  const existing = await contentStore.get(today, { type: "json" });
   if (existing?.blogArticleId) {
     // Already published today (e.g. manual test re-run) — don't create a duplicate article
     bundle.blogArticleId = existing.blogArticleId;
