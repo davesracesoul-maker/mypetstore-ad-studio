@@ -2,6 +2,7 @@ import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";
 import { pinterestConfigured, getStoredTokens, createDailyPin } from "./pinterest.mjs";
 import { instagramConfigured, createInstagramPost } from "./instagram.mjs";
+import { tiktokConfigured, getStoredTokens as getTikTokTokens, createTikTokPhotoPost } from "./tiktok.mjs";
 
 async function getShopifyAccessToken(domain) {
   const tokenUrl = `https://${domain}/admin/oauth/access_token`;
@@ -392,6 +393,26 @@ DESCRIPTION: ${product.desc}`;
     } catch (err) {
       bundle.igPostError = err.message;
       console.error("[daily-content] Instagram post FAILED:", err.message);
+    }
+  }
+
+  if (existing?.tiktokPublishId) {
+    bundle.tiktokPublishId = existing.tiktokPublishId;
+    bundle.tiktokPrivacy = existing.tiktokPrivacy;
+    console.log("[daily-content] already posted to TikTok today, skipping");
+  } else if (!tiktokConfigured()) {
+    console.log("[daily-content] TikTok credentials not configured, skipping TikTok post");
+  } else if (!(await getTikTokTokens())?.access_token) {
+    console.log("[daily-content] TikTok not connected yet, skipping TikTok post");
+  } else {
+    try {
+      const post = await createTikTokPhotoPost(bundle);
+      bundle.tiktokPublishId = post.publishId;
+      bundle.tiktokPrivacy = post.privacy;
+      console.log("[daily-content] posted photo to TikTok:", post.publishId, `(${post.privacy})`);
+    } catch (err) {
+      bundle.tiktokPostError = err.message;
+      console.error("[daily-content] TikTok post FAILED:", err.message);
     }
   }
 
