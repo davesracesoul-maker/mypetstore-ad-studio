@@ -148,7 +148,7 @@ export default function ContentCalendar({ onUseProduct }) {
               {b.tweetUrl && <a href={b.tweetUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#2D7A2D", textDecoration: "none" }}>✓ Posted to X ↗</a>}
               {b.pinUrl && <a href={b.pinUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#2D7A2D", textDecoration: "none" }}>✓ Pinned ↗</a>}
               {b.igUrl && <a href={b.igUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#2D7A2D", textDecoration: "none" }}>✓ On Instagram ↗</a>}
-              {b.tiktokPublishId && <span style={{ fontSize: 12, fontWeight: 600, color: b.tiktokPrivacy === "PUBLIC_TO_EVERYONE" ? "#2D7A2D" : "#9B8B7A" }}>✓ TikTok{b.tiktokPrivacy !== "PUBLIC_TO_EVERYONE" ? " (private)" : ""}</span>}
+              {b.tiktokPublishId && <span style={{ fontSize: 12, fontWeight: 600, color: b.tiktokPrivacy === "PUBLIC_TO_EVERYONE" ? "#2D7A2D" : "#9B8B7A" }}>✓ TikTok{b.tiktokPrivacy === "DRAFT" ? " (draft — publish in app)" : b.tiktokPrivacy !== "PUBLIC_TO_EVERYONE" ? " (private)" : ""}</span>}
               <CopyButton text={[b.ad.headline, b.ad.hook, b.ad.body, b.ad.cta].filter(Boolean).join("\n\n")} />
             </div>
           </div>

@@ -17,7 +17,8 @@ export default async (request) => {
 
   const authUrl = new URL("https://www.tiktok.com/v2/auth/authorize/");
   authUrl.searchParams.set("client_key", process.env.TIKTOK_CLIENT_KEY);
-  authUrl.searchParams.set("scope", "user.info.basic,video.publish");
+  // video.publish (direct post) is gated behind TikTok's audit — request upload (drafts) until then
+  authUrl.searchParams.set("scope", "user.info.basic,video.upload");
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("redirect_uri", `${url.origin}/api/tiktok-callback`);
   authUrl.searchParams.set("state", state);

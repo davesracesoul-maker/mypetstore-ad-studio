@@ -74,12 +74,6 @@ export async function createTikTokPhotoPost(bundle) {
   if (!bundle.product?.image) throw new Error("Product has no image — TikTok photo posts require one");
   const token = await getAccessToken();
 
-  // Unaudited clients may only post with privacy levels the creator info allows (SELF_ONLY pre-audit)
-  const creator = await api(token, "/post/publish/creator_info/query/");
-  const levels = creator?.privacy_level_options || [];
-  const privacy = levels.includes("PUBLIC_TO_EVERYONE") ? "PUBLIC_TO_EVERYONE" : levels.includes("SELF_ONLY") ? "SELF_ONLY" : levels[0];
-  if (!privacy) throw new Error("TikTok creator info returned no privacy level options");
-
   // TikTok only pulls images from our verified domain, so relay Shopify CDN images through it
   const siteUrl = process.env.URL || "https://mypetstore-ad-studio.netlify.app";
   const imageUrl = `${siteUrl}/api/img?src=${encodeURIComponent(bundle.product.image)}`;
@@ -95,22 +89,22 @@ export async function createTikTokPhotoPost(bundle) {
     .join("\n\n")
     .slice(0, 4000);
 
+  // MEDIA_UPLOAD sends the post to the account's TikTok inbox/drafts for one-tap
+  // publishing. Direct post (DIRECT_POST + video.publish scope) requires passing
+  // TikTok's audit — switch post_mode back once approved.
   const result = await api(token, "/post/publish/content/init/", {
     post_info: {
       title,
       description,
-      privacy_level: privacy,
-      disable_comment: false,
-      auto_add_music: true,
     },
     source_info: {
       source: "PULL_FROM_URL",
       photo_cover_index: 0,
       photo_images: [imageUrl],
     },
-    post_mode: "DIRECT_POST",
+    post_mode: "MEDIA_UPLOAD",
     media_type: "PHOTO",
   });
 
-  return { publishId: result.publish_id, privacy };
+  return { publishId: result.publish_id, privacy: "DRAFT" };
 }
