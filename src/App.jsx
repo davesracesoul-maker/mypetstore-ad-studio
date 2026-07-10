@@ -378,7 +378,7 @@ Return ONLY a raw JSON array of exactly 3 objects. No markdown fences, no explan
         {view === "studio" && (step === 1 || step === 2) && (
           <>
             <div style={{ textAlign: "center", marginBottom: 28, paddingTop: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#FF8A4C", marginBottom: 10 }}>Zeely-Style for mypetstore.shop</div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#FF8A4C", marginBottom: 10 }}>AI Ad Studio for mypetstore.shop</div>
               <h1 style={{ fontSize: "clamp(26px, 5vw, 42px)", fontWeight: 900, letterSpacing: -1.5, lineHeight: 1.1, margin: "0 0 10px", color: "#2B1F14" }}>
                 Create Pet Ads That<br /><span style={{ color: "#FF8A4C" }}>Actually Convert</span>
               </h1>
