@@ -74,9 +74,21 @@ export async function createTikTokPhotoPost(bundle) {
   if (!bundle.product?.image) throw new Error("Product has no image — TikTok photo posts require one");
   const token = await getAccessToken();
 
-  // TikTok only pulls images from our verified domain, so relay Shopify CDN images through it
+  // TikTok only pulls images from our verified domain, so relay Shopify CDN images
+  // through it — extensioned path (no query string) for their URL validator
   const siteUrl = process.env.URL || "https://mypetstore-ad-studio.netlify.app";
-  const imageUrl = `${siteUrl}/api/img?src=${encodeURIComponent(bundle.product.image)}`;
+  const imageToken = Buffer.from(bundle.product.image, "utf8").toString("base64url");
+  const imageUrl = `${siteUrl}/api/img/${imageToken}.jpg`;
+
+  // Pre-warm the relay so TikTok's pull hits a cached, instant response
+  try {
+    const warm = await fetch(imageUrl);
+    console.log("[tiktok] image relay pre-warm status:", warm.status);
+    if (!warm.ok) throw new Error(`relay returned ${warm.status}`);
+    await warm.arrayBuffer();
+  } catch (err) {
+    throw new Error(`Image relay pre-warm failed: ${err.message}`);
+  }
 
   const title = (bundle.ad?.headline || bundle.product?.name || "").slice(0, 90);
   const description = [
