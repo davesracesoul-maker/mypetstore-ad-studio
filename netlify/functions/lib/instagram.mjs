@@ -75,6 +75,17 @@ export async function createInstagramPost(bundle) {
     params: { image_url: bundle.product.image, caption: buildCaption(bundle) },
   });
 
+  // Wait for Instagram to finish processing the container before publishing
+  let ready = false;
+  for (let i = 0; i < 10; i++) {
+    const status = await igFetch(token, `/${container.id}`, { params: { fields: "status_code" } });
+    console.log("[instagram] container status:", status.status_code);
+    if (status.status_code === "FINISHED") { ready = true; break; }
+    if (status.status_code === "ERROR") throw new Error("Instagram media container processing failed");
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  if (!ready) throw new Error("Instagram media container not ready after 30s");
+
   const published = await igFetch(token, `/${igUserId}/media_publish`, {
     method: "POST",
     params: { creation_id: container.id },
