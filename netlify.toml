@@ -3,6 +3,9 @@
   publish = "dist"
   functions = "netlify/functions"
 
+[functions]
+  external_node_modules = ["sharp"]
+
 [[redirects]]
   from = "/api/*"
   to = "/api/:splat"

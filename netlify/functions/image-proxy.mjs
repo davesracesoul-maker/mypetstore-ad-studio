@@ -1,3 +1,5 @@
+import sharp from "sharp";
+
 const ALLOWED_HOSTS = new Set(["cdn.shopify.com"]);
 
 export default async (request) => {
@@ -18,9 +20,18 @@ export default async (request) => {
   const upstream = await fetch(target.toString());
   if (!upstream.ok) return new Response("Upstream fetch failed", { status: 502 });
 
-  return new Response(upstream.body, {
+  // TikTok's photo puller wants JPEG/WebP within 1080p and a definite length —
+  // convert whatever Shopify serves into a bounded, fully buffered JPEG
+  const input = Buffer.from(await upstream.arrayBuffer());
+  const out = await sharp(input)
+    .resize(1080, 1080, { fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 85 })
+    .toBuffer();
+
+  return new Response(out, {
     headers: {
-      "Content-Type": upstream.headers.get("Content-Type") || "image/jpeg",
+      "Content-Type": "image/jpeg",
+      "Content-Length": String(out.length),
       "Cache-Control": "public, max-age=86400",
     },
   });
