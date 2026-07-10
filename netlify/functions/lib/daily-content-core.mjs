@@ -396,7 +396,7 @@ DESCRIPTION: ${product.desc}`;
     }
   }
 
-  if (existing?.tiktokPublishId) {
+  if (existing?.tiktokPublishId && !force) {
     bundle.tiktokPublishId = existing.tiktokPublishId;
     bundle.tiktokPrivacy = existing.tiktokPrivacy;
     console.log("[daily-content] already posted to TikTok today, skipping");
