@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { pinterestConfigured, getStoredTokens, createDailyPin } from "./pinterest.mjs";
 import { instagramConfigured, createInstagramPost } from "./instagram.mjs";
 import { tiktokConfigured, getStoredTokens as getTikTokTokens, createTikTokPhotoPost } from "./tiktok.mjs";
+import { facebookConfigured, getStoredPageToken, createFacebookPost } from "./facebook.mjs";
 
 async function getShopifyAccessToken(domain) {
   const tokenUrl = `https://${domain}/admin/oauth/access_token`;
@@ -413,6 +414,26 @@ DESCRIPTION: ${product.desc}`;
     } catch (err) {
       bundle.tiktokPostError = err.message;
       console.error("[daily-content] TikTok post FAILED:", err.message);
+    }
+  }
+
+  if (existing?.fbPostId) {
+    bundle.fbPostId = existing.fbPostId;
+    bundle.fbPostUrl = existing.fbPostUrl;
+    console.log("[daily-content] already posted to Facebook today, skipping");
+  } else if (!facebookConfigured()) {
+    console.log("[daily-content] Facebook credentials not configured, skipping Facebook post");
+  } else if (!(await getStoredPageToken())?.page_access_token) {
+    console.log("[daily-content] Facebook not connected yet, skipping Facebook post");
+  } else {
+    try {
+      const post = await createFacebookPost(bundle);
+      bundle.fbPostId = post.id;
+      bundle.fbPostUrl = post.url;
+      console.log("[daily-content] posted to Facebook:", post.url);
+    } catch (err) {
+      bundle.fbPostError = err.message;
+      console.error("[daily-content] Facebook post FAILED:", err.message);
     }
   }
 

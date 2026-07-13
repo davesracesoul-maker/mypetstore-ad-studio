@@ -163,7 +163,10 @@ export default function ContentCalendar({ onUseProduct }) {
         <div style={card}>
           <div style={cardHeader}>
             <div style={{ ...sectionTitle, color: "#1877F2" }}>Facebook Caption</div>
-            <CopyButton text={b.fbCaption} />
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {b.fbPostUrl && <a href={b.fbPostUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#2D7A2D", textDecoration: "none" }}>✓ Posted to Facebook ↗</a>}
+              <CopyButton text={b.fbCaption} />
+            </div>
           </div>
           <p style={{ fontSize: 13, color: "#9B8B7A", margin: "0 0 10px" }}>
             Ready to paste into a Page post or the Meta Business Suite scheduler — copy, pick a date, done.
