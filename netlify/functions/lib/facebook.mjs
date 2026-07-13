@@ -1,7 +1,7 @@
 import { getStore } from "@netlify/blobs";
 
 const API = "https://graph.facebook.com/v23.0";
-const PAGE_ID = "61591504833416"; // My Pet Store
+const PAGE_ID = "1256757990847047"; // My Pet Store (Graph page id)
 
 export function facebookConfigured() {
   return !!(process.env.FB_APP_ID && process.env.FB_APP_SECRET);
