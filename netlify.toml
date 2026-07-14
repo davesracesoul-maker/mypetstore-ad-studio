@@ -6,6 +6,11 @@
 [functions]
   external_node_modules = ["sharp"]
 
+[[headers]]
+  for = "/app-icon.png"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+
 [[redirects]]
   from = "/api/*"
   to = "/api/:splat"
