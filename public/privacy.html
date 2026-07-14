@@ -3,37 +3,53 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Privacy Policy — MyPetStore Ad Studio</title>
+  <title>MyPetStore Ad Studio Privacy Policy</title>
+  <link rel="icon" type="image/png" href="/app-icon.png" />
+  <link rel="apple-touch-icon" href="/app-icon.png" />
   <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #FAF6F0; color: #2B1F14; margin: 0; padding: 40px 20px; line-height: 1.7; }
     main { max-width: 720px; margin: 0 auto; background: #fff; border: 1px solid #E8E0D5; border-radius: 20px; padding: 36px 40px; }
+    .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #E8E0D5; }
+    .brand img { width: 56px; height: 56px; border-radius: 14px; }
+    .brand .name { font-size: 18px; font-weight: 800; }
+    .brand .name a { color: #2B1F14; text-decoration: none; }
     h1 { font-size: 28px; margin-top: 0; }
     h2 { font-size: 18px; margin-top: 28px; }
     p, li { font-size: 15px; color: #5C5040; }
     a { color: #E8702F; }
+    nav { max-width: 720px; margin: 0 auto 16px; font-size: 14px; }
   </style>
 </head>
 <body>
+  <nav><a href="/">← Home</a> &nbsp;·&nbsp; <a href="/terms">Terms of Service</a></nav>
   <main>
-    <h1>Privacy Policy</h1>
-    <p><em>Last updated: July 7, 2026</em></p>
+    <div class="brand">
+      <img src="/app-icon.png" alt="MyPetStore Ad Studio app icon" />
+      <div class="name"><a href="/">MyPetStore Ad Studio</a></div>
+    </div>
 
-    <p>MyPetStore Ad Studio ("the app", hosted at mypetstore-ad-studio.netlify.app) is a content-generation tool operated by MyPetStore (mypetstore.shop) for its own marketing. It generates advertising copy and publishes content about MyPetStore products to MyPetStore's own accounts.</p>
+    <h1>MyPetStore Ad Studio Privacy Policy</h1>
+    <p><em>Last updated: July 14, 2026</em></p>
+
+    <p>MyPetStore Ad Studio (hosted at mypetstore-ad-studio.netlify.app) is an AI-powered marketing tool for pet products. It generates advertising copy, blog posts, and social media content, and can publish that content to social platforms connected through each platform's official authorization (OAuth) flow.</p>
 
     <h2>Information we collect</h2>
     <ul>
-      <li><strong>Visitors:</strong> the app does not require accounts, does not use analytics or advertising trackers, and does not collect personal information from visitors. Product details typed into the ad generator are sent to an AI service (Anthropic's Claude API) solely to generate ad copy and are not stored by the app.</li>
-      <li><strong>Connected services:</strong> the app stores OAuth access tokens for third-party platforms (such as Pinterest and Shopify) that the store owner has explicitly connected. These tokens are used only to publish MyPetStore's own content to MyPetStore's own accounts, and are stored securely in the app's hosting infrastructure (Netlify).</li>
+      <li><strong>Visitors:</strong> the app does not require an account, does not use analytics or advertising trackers, and does not collect personal information from visitors. Product details typed into the ad generator are sent to an AI service (Anthropic's Claude API) solely to generate ad copy and are not stored by the app.</li>
+      <li><strong>Connected platforms:</strong> when a social platform (such as TikTok, Pinterest, or Shopify) is connected through its official OAuth flow, the app stores the resulting access token securely in its hosting infrastructure (Netlify). Tokens are used only to publish content to, or read catalog data from, the specific account that was authorized.</li>
+      <li><strong>Basic account details:</strong> for connected platforms, the app may read basic profile information (such as the account's display name and posting permissions) where the platform's API requires it to publish content correctly. This information is not stored beyond what is needed to complete publishing.</li>
     </ul>
 
     <h2>How we use information</h2>
-    <p>Data accessed through connected platforms (for example, reading MyPetStore's product catalog or creating pins on MyPetStore's Pinterest boards) is used exclusively to generate and publish marketing content for MyPetStore. We do not sell, share, or transfer any data to third parties, and we do not access data belonging to other users of those platforms.</p>
+    <p>Data accessed through connected platforms is used exclusively to generate and publish marketing content to the connected account. We do not sell, share, or transfer any data to third parties, and we do not access data belonging to other users of those platforms.</p>
 
     <h2>Data retention and deletion</h2>
-    <p>Generated content bundles are retained for display in the app's content calendar. OAuth tokens are retained until the store owner disconnects the integration, at which point they are deleted. To request deletion of any data, contact us at the email below.</p>
+    <p>Generated content bundles are retained for display in the app's content calendar. OAuth access tokens are retained until the integration is disconnected, at which point they are deleted. You can also revoke the app's access at any time from the connected platform's own settings (for example, TikTok's "Manage app permissions"). To request deletion of any data, contact us at the email below.</p>
 
     <h2>Contact</h2>
     <p>Questions about this policy: <a href="mailto:MyPetStoreShops@gmail.com">MyPetStoreShops@gmail.com</a></p>
+
+    <p>See also our <a href="/terms">Terms of Service</a>.</p>
   </main>
 </body>
 </html>

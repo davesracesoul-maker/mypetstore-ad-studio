@@ -355,7 +355,7 @@ Return ONLY a raw JSON array of exactly 3 objects. No markdown fences, no explan
       {/* Header */}
       <div style={s.header}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 800, fontSize: 16 }}>
-          <div style={{ width: 30, height: 30, background: "#FF8A4C", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>🐾</div>
+          <img src="/app-icon.png" alt="MyPetStore Ad Studio app icon" style={{ width: 30, height: 30, borderRadius: 8 }} />
           MyPetStore <span style={{ color: "#FF8A4C", marginLeft: 4 }}>Ad Studio</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -578,6 +578,40 @@ Return ONLY a raw JSON array of exactly 3 objects. No markdown fences, no explan
             </div>
           </>
         )}
+      </div>
+
+      {/* Footer */}
+      <div style={{ background: "#2B1F14", padding: "40px 24px 28px" }}>
+        <div style={{ maxWidth: 880, margin: "0 auto" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 32, justifyContent: "space-between", marginBottom: 28 }}>
+            <div style={{ maxWidth: 340 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#fff", fontWeight: 800, fontSize: 15, marginBottom: 10 }}>
+                <img src="/app-icon.png" alt="MyPetStore Ad Studio app icon" style={{ width: 28, height: 28, borderRadius: 7 }} />
+                MyPetStore Ad Studio
+              </div>
+              <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, lineHeight: 1.6 }}>
+                AI-powered ad copy, blog posts, and social content for pet products — generated in seconds and publishable to your connected social channels.
+              </div>
+            </div>
+            <div>
+              <div style={{ color: "#FF8A4C", fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Legal</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <a href="/privacy" style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, textDecoration: "none" }}>Privacy Policy</a>
+                <a href="/terms" style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, textDecoration: "none" }}>Terms of Service</a>
+              </div>
+            </div>
+            <div>
+              <div style={{ color: "#FF8A4C", fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Explore</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <a href="https://mypetstore.shop" target="_blank" rel="noreferrer" style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, textDecoration: "none" }}>mypetstore.shop ↗</a>
+                <a href="mailto:MyPetStoreShops@gmail.com" style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, textDecoration: "none" }}>Contact</a>
+              </div>
+            </div>
+          </div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 16, color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
+            © {new Date().getFullYear()} MyPetStore Ad Studio · <a href="/privacy" style={{ color: "rgba(255,255,255,0.55)" }}>Privacy Policy</a> · <a href="/terms" style={{ color: "rgba(255,255,255,0.55)" }}>Terms of Service</a>
+          </div>
+        </div>
       </div>
     </div>
   );
