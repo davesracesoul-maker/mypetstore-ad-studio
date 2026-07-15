@@ -72,7 +72,11 @@ async function api(token, method, path, body) {
 }
 
 async function findOrCreateBoard(token) {
-  const name = process.env.PINTEREST_BOARD_NAME || "MyPetStore Daily Finds";
+  // Board names are unique account-wide, but sandbox can't see (or pin to)
+  // production boards — so sandbox mode needs its own board name.
+  const name =
+    process.env.PINTEREST_BOARD_NAME ||
+    (process.env.PINTEREST_SANDBOX === "1" ? "MyPetStore Sandbox Finds" : "MyPetStore Daily Finds");
   const boards = await api(token, "GET", "/boards?page_size=100");
   const found = (boards.items || []).find((b) => b.name.toLowerCase() === name.toLowerCase());
   if (found) return found.id;
