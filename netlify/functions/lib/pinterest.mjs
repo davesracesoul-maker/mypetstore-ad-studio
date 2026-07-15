@@ -2,9 +2,10 @@ import { getStore } from "@netlify/blobs";
 
 // Trial-access apps may only create pins via the sandbox API (Pinterest error
 // code 29 in production). Set PINTEREST_SANDBOX=1 until standard access is
-// granted, then remove it. OAuth token exchange always uses the production host.
+// granted, then remove it and re-run /api/pinterest-connect — the OAuth token
+// exchange also happens against the selected host, and tokens from one
+// environment are not valid in the other.
 const API = process.env.PINTEREST_SANDBOX === "1" ? "https://api-sandbox.pinterest.com/v5" : "https://api.pinterest.com/v5";
-const OAUTH_API = "https://api.pinterest.com/v5";
 
 function basicAuth() {
   return "Basic " + Buffer.from(`${process.env.PINTEREST_APP_ID}:${process.env.PINTEREST_APP_SECRET}`).toString("base64");
@@ -20,7 +21,7 @@ export async function getStoredTokens() {
 }
 
 export async function exchangeAndStore(params) {
-  const res = await fetch(`${OAUTH_API}/oauth/token`, {
+  const res = await fetch(`${API}/oauth/token`, {
     method: "POST",
     headers: { Authorization: basicAuth(), "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams(params),
