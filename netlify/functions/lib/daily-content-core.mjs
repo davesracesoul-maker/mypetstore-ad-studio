@@ -249,8 +249,18 @@ async function askClaude(prompt, maxTokens) {
   return text.trim();
 }
 
+// The pipeline runs twice a day (see daily-content.mjs schedule). Each run gets
+// its own bundle key so the idempotency guards work per run, not per day:
+// morning runs keep the bare date (backward compatible with existing bundles),
+// evening runs (18:00 UTC or later) get a "-pm" suffix.
+export function currentRunKey() {
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10);
+  return now.getUTCHours() >= 18 ? `${date}-pm` : date;
+}
+
 export async function runDailyContent({ force = false } = {}) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = currentRunKey();
   const contentStore = getStore("daily-content");
 
   const existing = await contentStore.get(today, { type: "json" });

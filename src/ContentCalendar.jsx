@@ -54,10 +54,13 @@ function CopyButton({ text }) {
   );
 }
 
-function formatDate(iso) {
-  const d = new Date(iso + "T12:00:00");
-  if (isNaN(d)) return iso;
-  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+function formatDate(key) {
+  // Evening-run bundles are keyed "YYYY-MM-DD-pm"
+  const pm = key.endsWith("-pm");
+  const d = new Date(key.slice(0, 10) + "T12:00:00");
+  if (isNaN(d)) return key;
+  const label = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return pm ? label + " · PM" : label;
 }
 
 export default function ContentCalendar({ onUseProduct }) {

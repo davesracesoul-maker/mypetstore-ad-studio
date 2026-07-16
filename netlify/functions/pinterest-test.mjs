@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { pinterestConfigured, getStoredTokens, createDailyPin } from "./lib/pinterest.mjs";
+import { currentRunKey } from "./lib/daily-content-core.mjs";
 
 // Pins today's existing bundle without re-running the rest of the daily pipeline
 // (TikTok/Instagram/Facebook), so it can't double-post to other platforms.
@@ -19,7 +20,7 @@ export default async (request) => {
     }
 
     const store = getStore("daily-content");
-    const today = new Date().toISOString().slice(0, 10);
+    const today = currentRunKey();
     const bundle = await store.get(today, { type: "json" });
     if (!bundle) throw new Error(`No bundle for ${today} — run the daily pipeline first`);
     if (bundle.pinId && url.searchParams.get("force") !== "1") {
