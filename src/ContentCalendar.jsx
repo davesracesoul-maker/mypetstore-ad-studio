@@ -108,10 +108,10 @@ export default function ContentCalendar({ onUseProduct }) {
   return (
     <>
       <div style={{ textAlign: "center", marginBottom: 24, paddingTop: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#FF8A4C", marginBottom: 10 }}>Fresh every morning</div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#FF8A4C", marginBottom: 10 }}>Fresh twice a day</div>
         <h1 style={{ fontSize: "clamp(24px, 4.5vw, 36px)", fontWeight: 900, letterSpacing: -1, lineHeight: 1.1, margin: "0 0 10px", color: "#2B1F14" }}>Content Calendar</h1>
         <p style={{ fontSize: 14, color: "#756B5E", maxWidth: 460, margin: "0 auto", lineHeight: 1.6 }}>
-          Every day, AI picks a product from your store and writes a full content bundle — ad, blog post, press release & tip.
+          Twice a day, AI picks a product from your store and writes a full content bundle — ad, blog post, press release & tip.
         </p>
       </div>
 
