@@ -49,9 +49,13 @@ async function shopifyGraphQL(token, query, variables) {
 }
 
 async function fetchShopifyProduct(token, rotationIndex) {
+  // Paginate the FULL active catalog so the rotation covers every product,
+  // not just the first page (with only first:50 the other ~220 products
+  // never got featured).
   const query = `
-    query {
-      products(first: 50, query: "status:active") {
+    query($after: String) {
+      products(first: 250, query: "status:active", after: $after) {
+        pageInfo { hasNextPage endCursor }
         edges {
           node {
             title
@@ -64,9 +68,14 @@ async function fetchShopifyProduct(token, rotationIndex) {
       }
     }
   `;
-  const data = await shopifyGraphQL(token, query);
-
-  const products = (data?.products?.edges || []).map((e) => e.node);
+  const products = [];
+  let after = null;
+  do {
+    const data = await shopifyGraphQL(token, query, { after });
+    const page = data?.products;
+    products.push(...(page?.edges || []).map((e) => e.node));
+    after = page?.pageInfo?.hasNextPage ? page.pageInfo.endCursor : null;
+  } while (after);
   if (!products.length) throw new Error("No active products found in Shopify store");
 
   const index = rotationIndex % products.length;
