@@ -68,11 +68,24 @@ export async function createFacebookPost(bundle) {
     bundle.product?.url ? `Shop: ${bundle.product.url}` : "",
   ].filter(Boolean).join("\n\n");
 
-  const result = await fbFetch(`/${tokens.page_id}/photos`, {
-    url: bundle.product.image,
-    caption,
-    access_token: tokens.page_access_token,
-  }, { method: "POST" });
+  // Graph API occasionally throws transient 500s ("Please reduce the amount of
+  // data...") on requests that succeed on retry — try once more after a pause.
+  let result;
+  try {
+    result = await fbFetch(`/${tokens.page_id}/photos`, {
+      url: bundle.product.image,
+      caption,
+      access_token: tokens.page_access_token,
+    }, { method: "POST" });
+  } catch (err) {
+    console.warn("[facebook] post failed, retrying once in 5s:", err.message);
+    await new Promise((r) => setTimeout(r, 5000));
+    result = await fbFetch(`/${tokens.page_id}/photos`, {
+      url: bundle.product.image,
+      caption,
+      access_token: tokens.page_access_token,
+    }, { method: "POST" });
+  }
 
   const postId = result.post_id || result.id;
   return { id: postId, url: `https://www.facebook.com/${postId}` };
