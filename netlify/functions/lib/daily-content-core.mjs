@@ -4,6 +4,7 @@ import { pinterestConfigured, getStoredTokens, createDailyPin } from "./pinteres
 import { instagramConfigured, createInstagramPost } from "./instagram.mjs";
 import { tiktokConfigured, getStoredTokens as getTikTokTokens, createTikTokPhotoPost } from "./tiktok.mjs";
 import { facebookConfigured, getStoredPageToken, createFacebookPost } from "./facebook.mjs";
+import { youtubeConfigured, getStoredTokens as getYoutubeTokens, createYoutubeShort } from "./youtube.mjs";
 
 async function getShopifyAccessToken(domain) {
   const tokenUrl = `https://${domain}/admin/oauth/access_token`;
@@ -453,6 +454,26 @@ DESCRIPTION: ${product.desc}`;
     } catch (err) {
       bundle.fbPostError = err.message;
       console.error("[daily-content] Facebook post FAILED:", err.message);
+    }
+  }
+
+  if (existing?.youtubeVideoId) {
+    bundle.youtubeVideoId = existing.youtubeVideoId;
+    bundle.youtubeUrl = existing.youtubeUrl;
+    console.log("[daily-content] already uploaded to YouTube today, skipping");
+  } else if (!youtubeConfigured()) {
+    console.log("[daily-content] YouTube credentials not configured, skipping YouTube Short");
+  } else if (!(await getYoutubeTokens())?.access_token) {
+    console.log("[daily-content] YouTube not connected yet, skipping YouTube Short");
+  } else {
+    try {
+      const video = await createYoutubeShort(bundle);
+      bundle.youtubeVideoId = video.id;
+      bundle.youtubeUrl = video.url;
+      console.log("[daily-content] uploaded YouTube Short:", video.url);
+    } catch (err) {
+      bundle.youtubePostError = err.message;
+      console.error("[daily-content] YouTube Short FAILED:", err.message);
     }
   }
 

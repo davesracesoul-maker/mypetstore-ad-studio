@@ -4,7 +4,8 @@
   functions = "netlify/functions"
 
 [functions]
-  external_node_modules = ["sharp"]
+  external_node_modules = ["sharp", "ffmpeg-static"]
+  included_files = ["node_modules/ffmpeg-static/ffmpeg"]
 
 [[headers]]
   for = "/app-icon.png"
