@@ -70,9 +70,13 @@ export async function createInstagramPost(bundle) {
   const me = await igFetch(token, "/me", { params: { fields: "user_id,username" } });
   const igUserId = me.user_id || me.id;
 
+  // Route through a padding relay — source photos vary in aspect ratio and
+  // Instagram rejects anything outside 4:5–1.91:1 (error 36003).
+  const paddedImageUrl = `${process.env.URL || "https://mypetstore-ad-studio.netlify.app"}/api/ig-img?src=${encodeURIComponent(bundle.product.image)}`;
+
   const container = await igFetch(token, `/${igUserId}/media`, {
     method: "POST",
-    params: { image_url: bundle.product.image, caption: buildCaption(bundle) },
+    params: { image_url: paddedImageUrl, caption: buildCaption(bundle) },
   });
 
   // Wait for Instagram to finish processing the container before publishing
