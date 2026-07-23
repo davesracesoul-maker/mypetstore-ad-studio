@@ -14,7 +14,7 @@ export default async (request) => {
   }
 
   const res = await fetch(
-    "https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name,username",
+    "https://open.tiktokapis.com/v2/user/info/?fields=open_id,avatar_url,display_name",
     { headers: { Authorization: `Bearer ${tokens.access_token}` } }
   );
   const data = await res.json().catch(() => ({}));
