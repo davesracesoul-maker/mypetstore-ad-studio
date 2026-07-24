@@ -4,7 +4,9 @@ import { pinterestConfigured, getStoredTokens, createDailyPin } from "./pinteres
 import { instagramConfigured, createInstagramPost } from "./instagram.mjs";
 import { tiktokConfigured, getStoredTokens as getTikTokTokens, createTikTokPhotoPost } from "./tiktok.mjs";
 import { facebookConfigured, getStoredPageToken, createFacebookPost } from "./facebook.mjs";
-import { youtubeConfigured, getStoredTokens as getYoutubeTokens, createYoutubeShort } from "./youtube.mjs";
+// YouTube is rendered by the separate youtube-daily-background function (see the
+// fire-and-forget trigger at the end of runDailyContent) so its heavy ffmpeg
+// render can't slow or kill this run. Deliberately not imported here.
 
 async function getShopifyAccessToken(domain) {
   const tokenUrl = `https://${domain}/admin/oauth/access_token`;
@@ -457,38 +459,34 @@ DESCRIPTION: ${product.desc}`;
     }
   }
 
-  // Save the bundle BEFORE the YouTube step. Video rendering (ffmpeg) is
-  // CPU/memory-heavy and can get the whole function killed mid-run, which
-  // previously wiped out the entire run (no bundle recorded, nothing logged —
-  // an uncatchable kill). Persisting here guarantees the content + all other
-  // channel posts survive even if YouTube never completes.
-  await contentStore.setJSON(today, bundle);
-  console.log("[daily-content] saved bundle (pre-YouTube) for", today);
-
+  // Carry a previously-rendered YouTube video forward so a re-run doesn't lose
+  // the reference (the actual render happens in the background function below).
   if (existing?.youtubeVideoId) {
     bundle.youtubeVideoId = existing.youtubeVideoId;
     bundle.youtubeUrl = existing.youtubeUrl;
-    console.log("[daily-content] already uploaded to YouTube today, skipping");
-  } else if (!youtubeConfigured()) {
-    console.log("[daily-content] YouTube credentials not configured, skipping YouTube Short");
-  } else if (!(await getYoutubeTokens())?.access_token) {
-    console.log("[daily-content] YouTube not connected yet, skipping YouTube Short");
-  } else {
-    try {
-      const video = await createYoutubeShort(bundle);
-      bundle.youtubeVideoId = video.id;
-      bundle.youtubeUrl = video.url;
-      console.log("[daily-content] uploaded YouTube Short:", video.url);
-      // Re-save so the YouTube URL is captured when the render does succeed.
-      await contentStore.setJSON(today, bundle);
-    } catch (err) {
-      bundle.youtubePostError = err.message;
-      console.error("[daily-content] YouTube Short FAILED:", err.message);
-      await contentStore.setJSON(today, bundle);
-    }
   }
 
+  await contentStore.setJSON(today, bundle);
   console.log("[daily-content] saved bundle for", today);
+
+  // Kick off the YouTube Short render in a separate background function. It's a
+  // fire-and-forget POST: Netlify accepts the background invocation immediately
+  // (202) and the heavy ffmpeg render runs independently, so it can't slow or
+  // kill this run. The background function reads this bundle back from the store
+  // and updates it with the video URL when done.
+  if (!bundle.youtubeVideoId) {
+    try {
+      const base = process.env.URL || "https://mypetstore-ad-studio.netlify.app";
+      await fetch(`${base}/.netlify/functions/youtube-daily-background`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runKey: today, key: process.env.DAILY_CONTENT_TEST_KEY }),
+      });
+      console.log("[daily-content] triggered YouTube background render for", today);
+    } catch (err) {
+      console.error("[daily-content] failed to trigger YouTube background render:", err.message);
+    }
+  }
 
   return bundle;
 }
