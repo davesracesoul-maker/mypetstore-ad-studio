@@ -457,6 +457,14 @@ DESCRIPTION: ${product.desc}`;
     }
   }
 
+  // Save the bundle BEFORE the YouTube step. Video rendering (ffmpeg) is
+  // CPU/memory-heavy and can get the whole function killed mid-run, which
+  // previously wiped out the entire run (no bundle recorded, nothing logged —
+  // an uncatchable kill). Persisting here guarantees the content + all other
+  // channel posts survive even if YouTube never completes.
+  await contentStore.setJSON(today, bundle);
+  console.log("[daily-content] saved bundle (pre-YouTube) for", today);
+
   if (existing?.youtubeVideoId) {
     bundle.youtubeVideoId = existing.youtubeVideoId;
     bundle.youtubeUrl = existing.youtubeUrl;
@@ -471,13 +479,15 @@ DESCRIPTION: ${product.desc}`;
       bundle.youtubeVideoId = video.id;
       bundle.youtubeUrl = video.url;
       console.log("[daily-content] uploaded YouTube Short:", video.url);
+      // Re-save so the YouTube URL is captured when the render does succeed.
+      await contentStore.setJSON(today, bundle);
     } catch (err) {
       bundle.youtubePostError = err.message;
       console.error("[daily-content] YouTube Short FAILED:", err.message);
+      await contentStore.setJSON(today, bundle);
     }
   }
 
-  await contentStore.setJSON(today, bundle);
   console.log("[daily-content] saved bundle for", today);
 
   return bundle;
