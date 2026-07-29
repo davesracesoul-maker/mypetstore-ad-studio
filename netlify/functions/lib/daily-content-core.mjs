@@ -51,7 +51,7 @@ async function shopifyGraphQL(token, query, variables) {
   return data.data;
 }
 
-async function fetchShopifyProduct(token, rotationIndex) {
+async function fetchShopifyProduct(token, rotationIndex, recentVendors = []) {
   // Paginate the FULL active catalog so the rotation covers every product,
   // not just the first page (with only first:50 the other ~220 products
   // never got featured).
@@ -63,6 +63,7 @@ async function fetchShopifyProduct(token, rotationIndex) {
           node {
             title
             handle
+            vendor
             description
             featuredMedia { preview { image { url } } }
             priceRangeV2 { minVariantPrice { amount currencyCode } }
@@ -81,14 +82,26 @@ async function fetchShopifyProduct(token, rotationIndex) {
   } while (after);
   if (!products.length) throw new Error("No active products found in Shopify store");
 
-  const index = rotationIndex % products.length;
+  // Skip past products whose brand/vendor was featured in the last few runs, so
+  // near-identical same-brand items (e.g. two Wonder Bark treats) don't post
+  // back-to-back. Bounded scan avoids looping forever if one vendor dominates.
+  const total = products.length;
+  const recent = new Set(recentVendors.map((v) => (v || "").trim()).filter(Boolean));
+  let index = rotationIndex % total;
+  for (let scanned = 0; scanned < total && recent.has((products[index].vendor || "").trim()); scanned++) {
+    index = (index + 1) % total;
+  }
   const p = products[index];
   return {
-    name: p.title,
-    desc: (p.description || "").slice(0, 400),
-    price: p.priceRangeV2?.minVariantPrice ? `$${p.priceRangeV2.minVariantPrice.amount}` : "",
-    url: `https://mypetstore.shop/products/${p.handle}`,
-    image: p.featuredMedia?.preview?.image?.url || "",
+    product: {
+      name: p.title,
+      desc: (p.description || "").slice(0, 400),
+      price: p.priceRangeV2?.minVariantPrice ? `$${p.priceRangeV2.minVariantPrice.amount}` : "",
+      url: `https://mypetstore.shop/products/${p.handle}`,
+      image: p.featuredMedia?.preview?.image?.url || "",
+      vendor: (p.vendor || "").trim(),
+    },
+    nextIndex: index + 1,
   };
 }
 
@@ -285,13 +298,16 @@ export async function runDailyContent({ force = false } = {}) {
   const rotationStore = getStore("daily-content-state");
   const state = await rotationStore.get("rotation", { type: "json" });
   const currentIndex = state?.index ?? 0;
+  const recentVendors = state?.recentVendors ?? [];
 
   const token = await getShopifyAccessToken(process.env.SHOPIFY_STORE_DOMAIN);
 
   console.log("[daily-content] fetching Shopify product, index", currentIndex);
-  const product = await fetchShopifyProduct(token, currentIndex);
-  console.log("[daily-content] got product:", product.name);
-  await rotationStore.setJSON("rotation", { index: currentIndex + 1 });
+  const { product, nextIndex } = await fetchShopifyProduct(token, currentIndex, recentVendors);
+  console.log("[daily-content] got product:", product.name, "(vendor:", product.vendor || "n/a", ")");
+  // Remember the last 3 vendors so the same brand doesn't post on back-to-back runs.
+  const updatedVendors = [product.vendor, ...recentVendors].filter(Boolean).slice(0, 3);
+  await rotationStore.setJSON("rotation", { index: nextIndex, recentVendors: updatedVendors });
 
   const adPrompt = `You are a direct-response copywriter for mypetstore.shop. Write ONE ad for this product using the AIDA framework:
 PRODUCT: ${product.name}
