@@ -57,7 +57,7 @@ async function fetchShopifyProduct(token, rotationIndex, recentVendors = []) {
   // never got featured).
   const query = `
     query($after: String) {
-      products(first: 250, query: "status:active", after: $after) {
+      products(first: 250, query: "status:active AND -tag:skip-daily-content", after: $after) {
         pageInfo { hasNextPage endCursor }
         edges {
           node {
