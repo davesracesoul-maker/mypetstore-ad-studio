@@ -316,10 +316,22 @@ PRICE: ${product.price}
 DESCRIPTION: ${product.desc}
 Return ONLY a raw JSON object (no markdown fences) with fields: "headline" (max 8 words), "hook" (one sentence), "body" (2-3 sentences), "cta" (max 4 words).`;
 
-  const blogPrompt = `Write a friendly, SEO-aware blog post (400-600 words) for mypetstore.shop about this product. Start with the title on the first line prefixed "TITLE: ", then a blank line, then the body.
+  const blogPrompt = `You are an SEO content writer for mypetstore.shop, a small US pet store. Write a genuinely helpful blog post (550-700 words) that ranks for SPECIFIC long-tail searches a real shopper types — NOT the store's brand name.
+
 PRODUCT: ${product.name}
+VENDOR/BRAND: ${product.vendor || "n/a"}
 PRICE: ${product.price}
-DESCRIPTION: ${product.desc}`;
+DESCRIPTION: ${product.desc}
+
+SEO REQUIREMENTS:
+- First identify the product's real category/type and the specific problem or use-case it solves, then write for a buyer searching that (e.g. "heated microwavable cat bed for older cats", "hand-painted western breast collar", "slow feeder bowl for fast eaters") — never for someone searching "my pet store".
+- TITLE: a specific, keyword-rich phrase a shopper would actually Google (product type + key benefit/use-case). ~50-60 characters. Do NOT include the store's brand name and do NOT start with "Introducing" or "Meet".
+- Use 3-4 descriptive "## " subheadings that naturally contain related search terms and buyer questions (e.g. "## How to choose...", "## Is a ... worth it?", "## Best for...").
+- Weave in the product type, materials, sizes, and related/synonym search terms naturally throughout — write for buyer intent (informational + commercial), answering the questions someone comparing this kind of product would ask.
+- Mention this specific product and its price once, naturally, as the recommended pick — don't be pushy (a shop link is added automatically at the end, so no hard sales CTA needed).
+- Avoid generic filler and brand-name padding; every paragraph should help someone deciding whether to buy this type of product.
+
+FORMAT: first line prefixed "TITLE: ", then a blank line, then the body using "## " for subheadings.`;
 
   const pressReleasePrompt = `Write a short press release (200-300 words) announcing this product is available at mypetstore.shop, in standard press release format (headline, dateline, body, and an "About MyPetStore" boilerplate closing paragraph).
 PRODUCT: ${product.name}
@@ -333,7 +345,7 @@ DESCRIPTION: ${product.desc}`;
   console.log("[daily-content] calling Claude for ad/blog/press-release/tip");
   const [adRaw, blogPost, pressRelease, dailyTip] = await Promise.all([
     askClaude(adPrompt, 500),
-    askClaude(blogPrompt, 1200),
+    askClaude(blogPrompt, 1600),
     askClaude(pressReleasePrompt, 700),
     askClaude(tipPrompt, 200),
   ]);
