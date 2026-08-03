@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { withUtm } from "./utm.mjs";
 
 // Trial-access apps may only create pins via the sandbox API (Pinterest error
 // code 29 in production). Set PINTEREST_SANDBOX=1 until standard access is
@@ -96,7 +97,7 @@ export async function createDailyPin(bundle) {
     board_id: boardId,
     title: (bundle.ad?.headline || bundle.product?.name || "").slice(0, 100),
     description: [bundle.ad?.hook, bundle.ad?.body].filter(Boolean).join(" ").slice(0, 800),
-    link: bundle.product?.url,
+    link: withUtm(bundle.product?.url, "pinterest"),
     media_source: { source_type: "image_url", url: bundle.product.image },
   });
   return { id: pin.id, url: `https://www.pinterest.com/pin/${pin.id}/` };

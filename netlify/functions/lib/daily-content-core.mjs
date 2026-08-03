@@ -4,6 +4,7 @@ import { pinterestConfigured, getStoredTokens, createDailyPin } from "./pinteres
 import { instagramConfigured, createInstagramPost } from "./instagram.mjs";
 import { tiktokConfigured, getStoredTokens as getTikTokTokens, createTikTokPhotoPost } from "./tiktok.mjs";
 import { facebookConfigured, getStoredPageToken, createFacebookPost } from "./facebook.mjs";
+import { withUtm } from "./utm.mjs";
 // YouTube is rendered by the separate youtube-daily-background function (see the
 // fire-and-forget trigger at the end of runDailyContent) so its heavy ffmpeg
 // render can't slow or kill this run. Deliberately not imported here.
@@ -214,7 +215,7 @@ function oauth1Header(method, url, consumerKey, consumerSecret, token, tokenSecr
 }
 
 function buildTweetText(bundle) {
-  const link = bundle.product?.url || "https://mypetstore.shop";
+  const link = withUtm(bundle.product?.url || "https://mypetstore.shop", "twitter");
   const headline = (bundle.ad?.headline || "").trim();
   const hook = (bundle.ad?.hook || "").trim();
   // t.co wraps every link at 23 chars, +1 for the newline before it
@@ -372,8 +373,8 @@ DESCRIPTION: ${product.desc}`;
       ad.headline,
       ad.hook,
       ad.body,
-      bundle.blogUrl ? `Read more: ${bundle.blogUrl}` : "",
-      product.url ? `Shop: ${product.url}` : "",
+      bundle.blogUrl ? `Read more: ${withUtm(bundle.blogUrl, "facebook")}` : "",
+      product.url ? `Shop: ${withUtm(product.url, "facebook")}` : "",
     ]
       .filter(Boolean)
       .join("\n\n");

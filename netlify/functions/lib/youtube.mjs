@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import sharp from "sharp";
 import ffmpegPath from "ffmpeg-static";
+import { withUtm } from "./utm.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -151,7 +152,7 @@ export async function createYoutubeShort(bundle) {
     bundle.ad?.hook,
     bundle.ad?.body,
     bundle.ad?.cta,
-    bundle.product?.url ? `Shop now: ${bundle.product.url}` : "",
+    bundle.product?.url ? `Shop now: ${withUtm(bundle.product.url, "youtube")}` : "",
     "#Shorts #PetProducts #MyPetStore",
   ].filter(Boolean).join("\n\n").slice(0, 4900);
 

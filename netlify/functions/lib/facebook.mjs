@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { withUtm } from "./utm.mjs";
 
 const API = "https://graph.facebook.com/v23.0";
 const PAGE_ID = "1256757990847047"; // My Pet Store (Graph page id)
@@ -64,8 +65,8 @@ export async function createFacebookPost(bundle) {
     bundle.ad?.headline,
     bundle.ad?.hook,
     bundle.ad?.body,
-    bundle.blogUrl ? `Read more: ${bundle.blogUrl}` : "",
-    bundle.product?.url ? `Shop: ${bundle.product.url}` : "",
+    bundle.blogUrl ? `Read more: ${withUtm(bundle.blogUrl, "facebook")}` : "",
+    bundle.product?.url ? `Shop: ${withUtm(bundle.product.url, "facebook")}` : "",
   ].filter(Boolean).join("\n\n");
 
   // Graph API occasionally throws transient 500s ("Please reduce the amount of

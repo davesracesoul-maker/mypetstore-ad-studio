@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { withUtm } from "./lib/utm.mjs";
 
 function withFbCaption(bundle) {
   if (bundle.fbCaption || !bundle.ad) return bundle;
@@ -7,8 +8,8 @@ function withFbCaption(bundle) {
     bundle.ad.headline,
     bundle.ad.hook,
     bundle.ad.body,
-    bundle.blogUrl ? `Read more: ${bundle.blogUrl}` : "",
-    bundle.product?.url ? `Shop: ${bundle.product.url}` : "",
+    bundle.blogUrl ? `Read more: ${withUtm(bundle.blogUrl, "facebook")}` : "",
+    bundle.product?.url ? `Shop: ${withUtm(bundle.product.url, "facebook")}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");

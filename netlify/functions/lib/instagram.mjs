@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { withUtm } from "./utm.mjs";
 
 const API = "https://graph.instagram.com/v25.0";
 
@@ -57,7 +58,7 @@ function buildCaption(bundle) {
     bundle.ad?.headline,
     bundle.ad?.hook,
     bundle.ad?.body,
-    bundle.product?.url ? `🛒 Shop: ${bundle.product.url}` : "",
+    bundle.product?.url ? `🛒 Shop: ${withUtm(bundle.product.url, "instagram")}` : "",
     "#pets #petsupplies #mypetstore",
   ].filter(Boolean);
   return parts.join("\n\n").slice(0, 2200);
