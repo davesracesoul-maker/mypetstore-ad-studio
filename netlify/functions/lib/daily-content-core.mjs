@@ -360,6 +360,15 @@ DESCRIPTION: ${product.desc}`;
 
   const bundle = { date: today, product, ad, blogPost, pressRelease, dailyTip };
 
+  // Persist the bundle after each external post. daily-content is a scheduled
+  // function and Netlify RETRIES scheduled functions on error/timeout; the
+  // per-channel idempotency guards read `existing` (the bundle on disk at the
+  // start of the run), so without an incremental save a retry that happens
+  // after a channel posted but before the final save would post again —
+  // producing duplicate TikTok drafts / FB posts / pins. Saving after each
+  // step means a retry sees what already went out and skips it.
+  const persist = () => contentStore.setJSON(today, bundle);
+
   if (existing?.blogArticleId) {
     bundle.fbCaption = existing.fbCaption;
     // Already published today (e.g. manual test re-run) — don't create a duplicate article
@@ -391,6 +400,7 @@ DESCRIPTION: ${product.desc}`;
       .filter(Boolean)
       .join("\n\n");
   }
+  await persist(); // blog article + caption saved before any social post
 
   if (existing?.tweetId) {
     bundle.tweetId = existing.tweetId;
@@ -409,6 +419,7 @@ DESCRIPTION: ${product.desc}`;
       console.error("[daily-content] X post FAILED:", err.message);
     }
   }
+  await persist();
 
   if (existing?.pinId) {
     bundle.pinId = existing.pinId;
@@ -429,6 +440,7 @@ DESCRIPTION: ${product.desc}`;
       console.error("[daily-content] Pinterest pin FAILED:", err.message);
     }
   }
+  await persist();
 
   if (existing?.igMediaId) {
     bundle.igMediaId = existing.igMediaId;
@@ -447,6 +459,7 @@ DESCRIPTION: ${product.desc}`;
       console.error("[daily-content] Instagram post FAILED:", err.message);
     }
   }
+  await persist();
 
   if (existing?.tiktokPublishId && !force) {
     bundle.tiktokPublishId = existing.tiktokPublishId;
@@ -467,6 +480,7 @@ DESCRIPTION: ${product.desc}`;
       console.error("[daily-content] TikTok post FAILED:", err.message);
     }
   }
+  await persist(); // critical: TikTok publish saved immediately so a retry won't re-draft
 
   if (existing?.fbPostId) {
     bundle.fbPostId = existing.fbPostId;
