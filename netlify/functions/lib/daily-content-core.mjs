@@ -277,12 +277,17 @@ async function askClaude(prompt, maxTokens) {
 
 // The pipeline runs twice a day (see daily-content.mjs schedule). Each run gets
 // its own bundle key so the idempotency guards work per run, not per day:
-// morning runs keep the bare date (backward compatible with existing bundles),
-// evening runs (18:00 UTC or later) get a "-pm" suffix.
+// Three runs per day, each keyed distinctly so the idempotency guards don't
+// collide: morning (13:00 UTC) keeps the bare date for backward compatibility,
+// afternoon (17:00 UTC) gets "-af", evening (22:00 UTC) gets "-pm". The 15/20
+// UTC boundaries leave wide margins around the 13/17/22 triggers.
 export function currentRunKey() {
   const now = new Date();
   const date = now.toISOString().slice(0, 10);
-  return now.getUTCHours() >= 18 ? `${date}-pm` : date;
+  const h = now.getUTCHours();
+  if (h >= 20) return `${date}-pm`;
+  if (h >= 15) return `${date}-af`;
+  return date;
 }
 
 export async function runDailyContent({ force = false } = {}) {

@@ -55,12 +55,13 @@ function CopyButton({ text }) {
 }
 
 function formatDate(key) {
-  // Evening-run bundles are keyed "YYYY-MM-DD-pm"
-  const pm = key.endsWith("-pm");
+  // Runs are keyed "YYYY-MM-DD" (morning), "-af" (afternoon), or "-pm" (evening)
   const d = new Date(key.slice(0, 10) + "T12:00:00");
   if (isNaN(d)) return key;
   const label = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  return pm ? label + " · PM" : label;
+  if (key.endsWith("-pm")) return label + " · PM";
+  if (key.endsWith("-af")) return label + " · Afternoon";
+  return label;
 }
 
 export default function ContentCalendar({ onUseProduct }) {

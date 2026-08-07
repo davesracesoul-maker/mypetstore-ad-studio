@@ -22,5 +22,5 @@ export default async () => {
   }
 };
 
-// 13:00 UTC (~9am ET) and 22:00 UTC (~6pm ET)
-export const config = { schedule: "0 13,22 * * *" };
+// 13:00 UTC (~9am ET), 17:00 UTC (~1pm ET), and 22:00 UTC (~6pm ET)
+export const config = { schedule: "0 13,17,22 * * *" };
