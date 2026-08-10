@@ -335,8 +335,9 @@ SEO REQUIREMENTS:
 - Weave in the product type, materials, sizes, and related/synonym search terms naturally throughout — write for buyer intent (informational + commercial), answering the questions someone comparing this kind of product would ask.
 - Mention this specific product and its price once, naturally, as the recommended pick — don't be pushy (a shop link is added automatically at the end, so no hard sales CTA needed).
 - Avoid generic filler and brand-name padding; every paragraph should help someone deciding whether to buy this type of product.
+- END with a "## Frequently Asked Questions" section answering 2-3 real questions a buyer would Google about this product type. Phrase each question exactly as a shopper would search it (natural long-tail), then answer in 1-2 concise sentences. This targets Google's "People Also Ask" / featured-snippet boxes.
 
-FORMAT: first line prefixed "TITLE: ", then a blank line, then the body using "## " for subheadings.`;
+FORMAT: first line prefixed "TITLE: ", then a blank line, then the body using "## " for subheadings (including the closing "## Frequently Asked Questions").`;
 
   const pressReleasePrompt = `Write a short press release (200-300 words) announcing this product is available at mypetstore.shop, in standard press release format (headline, dateline, body, and an "About MyPetStore" boilerplate closing paragraph).
 PRODUCT: ${product.name}
