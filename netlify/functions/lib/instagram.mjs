@@ -75,6 +75,19 @@ export async function createInstagramPost(bundle) {
   // Instagram rejects anything outside 4:5–1.91:1 (error 36003).
   const paddedImageUrl = `${process.env.URL || "https://mypetstore-ad-studio.netlify.app"}/api/ig-img?src=${encodeURIComponent(bundle.product.image)}`;
 
+  // Pre-warm the padding relay so Instagram's media fetch hits a cached, instant
+  // response. Without this a cold relay + sharp processing can exceed Instagram's
+  // download timeout ("It takes too long to download the media"). Same approach
+  // as the TikTok photo flow.
+  try {
+    const warm = await fetch(paddedImageUrl);
+    console.log("[instagram] image relay pre-warm status:", warm.status);
+    if (!warm.ok) throw new Error(`relay returned ${warm.status}`);
+    await warm.arrayBuffer();
+  } catch (err) {
+    throw new Error(`Image relay pre-warm failed: ${err.message}`);
+  }
+
   const container = await igFetch(token, `/${igUserId}/media`, {
     method: "POST",
     params: { image_url: paddedImageUrl, caption: buildCaption(bundle) },
