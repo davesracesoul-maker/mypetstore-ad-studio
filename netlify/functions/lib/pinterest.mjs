@@ -89,16 +89,77 @@ async function findOrCreateBoard(token) {
   return created.id;
 }
 
+// Pinterest is a search engine — pick a few relevant hashtags from the product
+// so pins surface for category searches, on top of the keyword-rich title/desc.
+function pinHashtags(text) {
+  const t = (text || "").toLowerCase();
+  const map = [
+    ["dog", "#dogs"],
+    ["puppy", "#puppylove"],
+    ["cat", "#cats"],
+    ["kitten", "#kittens"],
+    ["treat", "#dogtreats"],
+    ["chew", "#dogtoys"],
+    ["toy", "#pettoys"],
+    ["bed", "#petbeds"],
+    ["groom", "#petgrooming"],
+    ["leash", "#dogwalking"],
+    ["collar", "#dogaccessories"],
+    ["harness", "#dogaccessories"],
+    ["litter", "#catsupplies"],
+    ["carrier", "#pettravel"],
+    ["stroller", "#pettravel"],
+    ["feeder", "#petcare"],
+    ["bowl", "#petcare"],
+  ];
+  const tags = new Set(["#mypetstore", "#petsupplies"]);
+  for (const [kw, tag] of map) if (t.includes(kw)) tags.add(tag);
+  return [...tags].slice(0, 7).join(" ");
+}
+
+// Keyword-rich, search-friendly title + description. Lead with the product name
+// (which carries the searchable keywords), then the ad copy, a CTA, and hashtags.
+function buildPinContent(bundle) {
+  const name = bundle.product?.name || "";
+  const title = (name || bundle.ad?.headline || "").slice(0, 100);
+  const copy = [bundle.ad?.headline, bundle.ad?.hook, bundle.ad?.body].filter(Boolean).join(" ");
+  const hashtags = pinHashtags(`${name} ${bundle.ad?.body || ""}`);
+  const description = [copy, "🛍️ Shop now at mypetstore.shop", hashtags]
+    .filter(Boolean)
+    .join("\n\n")
+    .slice(0, 800);
+  return { title, description };
+}
+
 export async function createDailyPin(bundle) {
   if (!bundle.product?.image) throw new Error("Product has no image — Pinterest pins require one");
   const token = await getAccessToken();
   const boardId = await findOrCreateBoard(token);
+
+  // Route the product photo through the 2:3 vertical relay so pins are tall
+  // (1000x1500) — Pinterest's preferred, higher-engagement format. Pre-warm it
+  // so Pinterest's image fetch hits the durable CDN cache instantly.
+  const siteUrl = process.env.URL || "https://mypetstore-ad-studio.netlify.app";
+  const pinImageUrl = `${siteUrl}/api/pin-img?src=${encodeURIComponent(bundle.product.image)}`;
+  let mediaUrl = pinImageUrl;
+  try {
+    const warm = await fetch(pinImageUrl);
+    console.log("[pinterest] pin image relay pre-warm status:", warm.status);
+    if (!warm.ok) throw new Error(`relay returned ${warm.status}`);
+    await warm.arrayBuffer();
+  } catch (err) {
+    // Fall back to the raw product image rather than failing the whole pin
+    console.error("[pinterest] pin image relay pre-warm failed, using raw image:", err.message);
+    mediaUrl = bundle.product.image;
+  }
+
+  const { title, description } = buildPinContent(bundle);
   const pin = await api(token, "POST", "/pins", {
     board_id: boardId,
-    title: (bundle.ad?.headline || bundle.product?.name || "").slice(0, 100),
-    description: [bundle.ad?.hook, bundle.ad?.body].filter(Boolean).join(" ").slice(0, 800),
+    title,
+    description,
     link: withUtm(bundle.product?.url, "pinterest"),
-    media_source: { source_type: "image_url", url: bundle.product.image },
+    media_source: { source_type: "image_url", url: mediaUrl },
   });
   return { id: pin.id, url: `https://www.pinterest.com/pin/${pin.id}/` };
 }
