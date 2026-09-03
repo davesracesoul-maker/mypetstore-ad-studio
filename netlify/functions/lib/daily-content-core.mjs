@@ -290,8 +290,12 @@ export function currentRunKey() {
   return date;
 }
 
-export async function runDailyContent({ force = false } = {}) {
-  const today = currentRunKey();
+export async function runDailyContent({ force = false, runKey } = {}) {
+  // `runKey` lets the watchdog backfill a SPECIFIC missed slot (e.g. a
+  // "2026-09-02-af" that Netlify skipped) instead of always using the slot
+  // implied by the current time. Everything below keys off `today`, so the
+  // override flows through the idempotency guards and the YouTube trigger too.
+  const today = runKey || currentRunKey();
   const contentStore = getStore("daily-content");
 
   const existing = await contentStore.get(today, { type: "json" });
