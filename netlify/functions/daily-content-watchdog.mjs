@@ -1,23 +1,21 @@
 import { getStore } from "@netlify/blobs";
 import { runDailyContent } from "./lib/daily-content-core.mjs";
 
-// Self-healing catch-up for the daily-content pipeline.
+// Self-healing catch-up / safety net for the daily-content pipeline.
 //
-// All three daily posts come from ONE cron in daily-content.mjs
-// ("0 13,17,22 * * *"). When Netlify silently skips one of those scheduled
-// invocations, no code runs for that slot, so nothing can heal itself — the
-// slot's bundle just never appears (this is what happened on 2026-09-02: the
-// 9am run posted everywhere but the 1pm and 6pm slots were dropped).
-//
-// This function is a SEPARATE scheduled function (its own independent cron), so
-// it fires even when the primary cron was skipped. An hour after each primary
-// trigger it checks whether that slot's bundle exists and, if not, backfills it
-// by calling the same pipeline with an explicit runKey. To lose a slot now,
-// BOTH crons would have to be skipped in the same window.
+// The PRIMARY trigger is now an external cron service (cron-job.org) that pings
+// run-daily-content-background at 13:00 / 17:00 / 22:00 UTC. This function is
+// the backup: a SEPARATE Netlify scheduled function that, an hour after each
+// slot, checks whether that slot's bundle exists and, if not, backfills it by
+// calling the same pipeline with an explicit runKey. It covers a missed or
+// not-yet-configured external cron, so no slot is ever silently lost (worst
+// case, a slot posts an hour late). Netlify's own scheduled cron was removed
+// because it silently skipped runs (2026-09-02: the 9am run posted everywhere
+// but the 1pm and 6pm slots were dropped).
 
-// Must stay in sync with daily-content.mjs's cron and currentRunKey() in the
-// core: morning (13:00 UTC) keeps the bare date, afternoon (17:00) gets "-af",
-// evening (22:00) gets "-pm".
+// Must stay in sync with the external cron's trigger hours and currentRunKey()
+// in the core: morning (13:00 UTC) keeps the bare date, afternoon (17:00) gets
+// "-af", evening (22:00) gets "-pm".
 const SLOTS = [
   { hour: 13, key: (d) => d },
   { hour: 17, key: (d) => `${d}-af` },
