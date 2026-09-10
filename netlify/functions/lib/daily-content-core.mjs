@@ -83,12 +83,15 @@ async function fetchShopifyProduct(token, rotationIndex, recentVendors = []) {
   } while (after);
   if (!products.length) throw new Error("No active products found in Shopify store");
 
-  // Skip past products whose brand/vendor was featured in the last few runs, so
+  // Pick a RANDOM product each run so every item — including freshly imported
+  // ones — has an equal chance of being featured. (A sequential index meant a
+  // full catalog cycle took ~total runs, so recent additions waited months.)
+  // Then skip past any brand/vendor featured in the last few runs so
   // near-identical same-brand items (e.g. two Wonder Bark treats) don't post
   // back-to-back. Bounded scan avoids looping forever if one vendor dominates.
   const total = products.length;
   const recent = new Set(recentVendors.map((v) => (v || "").trim()).filter(Boolean));
-  let index = rotationIndex % total;
+  let index = Math.floor(Math.random() * total);
   for (let scanned = 0; scanned < total && recent.has((products[index].vendor || "").trim()); scanned++) {
     index = (index + 1) % total;
   }
